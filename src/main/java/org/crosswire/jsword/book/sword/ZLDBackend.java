@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.sword;
@@ -133,6 +132,68 @@ public class ZLDBackend extends RawLDBackend<ZLDBackendState> {
      */
     private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
         is.defaultReadObject();
+    }
+    /** 
+     * Experimental code.
+     */
+    @Override
+    public void dumpIdxRaf() {
+        RawLDBackendState state = null;
+        long end = -1;
+        try {
+            state = initState();
+            end = getCardinality();
+            StringBuilder buf = new StringBuilder();
+            System.out.println("index\toffset\tsize\tkey\tvalue");
+            for (long i = 0; i < end; ++i) {
+                DataIndex index = getIndex(state, i);
+                int offset = index.getOffset();
+                int size   = index.getSize();
+                buf.setLength(0);
+                buf.append(i);
+                buf.append('\t');
+                buf.append(offset);
+                buf.append('\t');
+                buf.append(size);
+                if (size > 0) {
+                    // Now read the data file for this key using the offset and size
+                    byte[] data = SwordUtil.readRAF(state.getDatRaf(), offset, size);
+                    DataEntry blockEntry = new DataEntry(Long.toString(i), data, getBookMetaData().getBookCharset());
+                    DataIndex block = blockEntry.getBlockIndex();
+                    DataEntry dataEntry = getEntry(state, blockEntry);
+                    String key = blockEntry.getKey();
+                    buf.append('\t');
+                    buf.append(key);
+                    buf.append('\t');
+                    buf.append(block.getOffset());
+                    buf.append('\t');
+                    buf.append(block.getSize());
+                    String raw;
+                    buf.append('\t');
+                    if (dataEntry.isLinkEntry()) {
+                        raw = dataEntry.getLinkTarget();
+                        buf.append("Linked to: ").append(raw.replace('\n', ' '));
+                    } else {
+                        raw = getRawText(dataEntry);
+                        if (raw.length() > 43) {
+                            buf.append(raw.substring(0, 40).replace('\n', ' '));
+                            buf.append("...");
+                        } else {
+                            buf.append(raw);
+                        }
+                    }
+                }
+                System.out.println(buf.toString());
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (BookException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } finally {
+            OpenFileStateManager.instance().release(state);
+        }
     }
 
     private static final int ZDX_ENTRY_SIZE = 8;

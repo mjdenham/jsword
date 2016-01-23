@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.sword;
@@ -30,6 +29,7 @@ import org.crosswire.common.crypt.Sapphire;
 import org.crosswire.jsword.JSMsg;
 import org.crosswire.jsword.JSOtherMsg;
 import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookMetaData;
 import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
 import org.crosswire.jsword.book.sword.state.OpenFileState;
 import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
@@ -72,7 +72,7 @@ public abstract class AbstractBackend<T extends OpenFileState> implements Statef
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#getBookMetaData()
      */
-    public SwordBookMetaData getBookMetaData() {
+    public BookMetaData getBookMetaData() {
         return bmd;
     }
 
@@ -122,7 +122,7 @@ public abstract class AbstractBackend<T extends OpenFileState> implements Statef
             state = initState();
             return readRawContent(state, key);
         } catch (IOException e) {
-            throw new BookException("Unable to obtain raw content from backend", e);
+            throw new BookException("Unable to obtain raw content from backend for key='" + key + '\'', e);
         } finally {
             OpenFileStateManager.instance().release(state);
         }

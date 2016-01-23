@@ -8,22 +8,25 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.examples;
 
 import java.util.List;
 
+import org.crosswire.jsword.book.Book;
+import org.crosswire.jsword.book.BookData;
+import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookFilter;
+import org.crosswire.jsword.book.Books;
 import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.TreeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ReadEverything {
+public final class ReadEverything {
     /**
      * Prevent instantiation
      */
@@ -45,21 +48,32 @@ public class ReadEverything {
      * @param args 
      */
     public static void main(String[] args) {
+        // TODO(DMS): add the ability to pass a filter specification
         // Loop through all the Books
         log.warn("*** Reading all installed Bibles");
-        BookFilter filter = BookFilters.getCustom("SourceType=GBF");
-        List<Book> comments = Books.installed().getBooks(filter);
-        for (Book book : comments) {
-
-            if (!book.isLocked()) {
-                log.warn("****** Reading: [{}] {} ({})", book.getInitials(), book.getName(), book.getBookCategory());
-                Key set = book.getGlobalKeyList();
-
-                testReadMultiple(book, set);
-            } else {
+        BookFilter filter = null;
+        //filter = BookFilters.getCustom("SourceType=ThML");
+        //filter = BookFilters.getCustom("Description=Ergane Turkish to English Glossary");
+        //filter = BookFilters.getCustom("ModDrv=zLD");
+        //filter = BookFilters.getCustom("Initials=BosworthToller");
+        //filter = BookFilters.getDictionaries();
+        List<Book> books = getBooks(filter);
+        for (Book book : books) {
+            if (book.isLocked()) {
                 log.warn("****** Skipping: [{}] {} ({})", book.getInitials(), book.getName(), book.getBookCategory());
+                continue;
             }
+            log.warn("****** Reading: [{}] {} ({})", book.getInitials(), book.getName(), book.getBookCategory());
+            Key set = book.getGlobalKeyList();
+            testReadMultiple(book, set);
         }
+    }
+
+    private static List<Book> getBooks(BookFilter filter) {
+        if (filter == null) {
+            return Books.installed().getBooks();
+        }
+        return Books.installed().getBooks(filter);
     }
 
     /**
@@ -69,17 +83,17 @@ public class ReadEverything {
         // log.info("Testing: {}={}", bmd.getInitials(), bmd.getName());
         long start = System.currentTimeMillis();
         int entries = 0;
-
+        count = 0;
         boolean first = true;
         for (Key key : set) {
-            // skip the root of a TreeKey as it often is not addressable.
+            // skip the first entry if the length is 0.
             if (first) {
                 first = false;
-                if (key instanceof TreeKey && key.getName().length() == 0) {
+                if (key.getName().length() == 0) {
                     continue;
                 }
             }
-            testReadSingle(book, key);
+            testReadSingle(book, key, entries);
 
             entries++;
         }
@@ -87,15 +101,20 @@ public class ReadEverything {
         long end = System.currentTimeMillis();
         float time = (end - start) / 1000F;
 
-        log.info("Tested: book={} entries={} time={}s ({}ms per entry)", book.getInitials(), Integer.toString(entries), Float.toString(time), Float.toString(1000 * time / entries));
+        if (count > 0) {
+            log.info("Tested: book={} entries={} time={}s errors={} ({}ms per entry)", book.getInitials(), Integer.toString(entries), Float.toString(time), Integer.toString(count), Float.toString(1000 * time / entries));
+        } else {
+            log.info("Tested: book={} entries={} time={}s ({}ms per entry)", book.getInitials(), Integer.toString(entries), Float.toString(time), Float.toString(1000 * time / entries));
+        }
     }
 
     /**
      * Perform a test read on a single key
      */
-    private static void testReadSingle(Book book, Key key) {
+    private static void testReadSingle(Book book, Key key, int entry) {
+        Throwable oops = null;
         try {
-            log.debug("reading: {}/{}", book.getInitials(), key.getName());
+            log.debug("reading: {}/{}:{}", book.getInitials(), Integer.toString(entry), key.getName());
 
             BookData data = new BookData(book, key);
             if (data.getOsisFragment() == null) {
@@ -105,10 +124,18 @@ public class ReadEverything {
             // This might be a useful extra test, except that a failure gives
             // you no help at all.
             // data.validate();
-        } catch (Throwable ex) {
-            log.error("Unexpected error reading: {}, {}, {}", book.getInitials(), key.getOsisID(), key.getClass().getName(), ex);
+        } catch (BookException ex) {
+            oops = ex;
+        }
+        if (oops != null) {
+            ++count;
+            if (count < 5) {
+                log.error("Unexpected error reading: {}, {}, {}, {}", book.getInitials(), Integer.toString(entry), key.getOsisID(), key.getClass().getName(), oops);
+            }
         }
     }
+
+    private static int count;
 
     /**
      * The log stream

@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2013 - 2016
  *
  */
 package org.crosswire.jsword.book.sword.state;
@@ -29,8 +28,8 @@ import org.crosswire.common.util.FileUtil;
 import org.crosswire.common.util.IOUtil;
 import org.crosswire.common.util.NetUtil;
 import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookMetaData;
 import org.crosswire.jsword.book.sword.BlockType;
-import org.crosswire.jsword.book.sword.SwordBookMetaData;
 import org.crosswire.jsword.book.sword.SwordConstants;
 import org.crosswire.jsword.book.sword.SwordUtil;
 import org.crosswire.jsword.versification.Testament;
@@ -56,8 +55,8 @@ public class ZVerseBackendState extends AbstractOpenFileState {
      * 
      * @param bookMetaData the appropriate metadata for the book
      */
-     ZVerseBackendState(SwordBookMetaData bookMetaData, BlockType blockType) throws BookException {
-        this.bookMetaData = bookMetaData;
+    ZVerseBackendState(BookMetaData bookMetaData, BlockType blockType) throws BookException {
+        super(bookMetaData);
         URI path = SwordUtil.getExpandedDataPath(bookMetaData);
         String otAllButLast = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_OT + '.' + blockType.getIndicator() + SUFFIX_PART1).getPath();
         File otIdxFile = new File(otAllButLast + SUFFIX_INDEX);
@@ -82,7 +81,7 @@ public class ZVerseBackendState extends AbstractOpenFileState {
                 IOUtil.close(otIdxRaf);
 
                 assert false : ex;
-                log.error("Could not open OT", ex);
+                LOGGER.error("Could not open OT", ex);
             }
         }
 
@@ -100,7 +99,7 @@ public class ZVerseBackendState extends AbstractOpenFileState {
                 IOUtil.close(ntIdxRaf);
 
                 assert false : ex;
-                log.error("Could not open OT", ex);
+                LOGGER.error("Could not open OT", ex);
             }
         }
     }
@@ -195,13 +194,6 @@ public class ZVerseBackendState extends AbstractOpenFileState {
         this.lastUncompressed = lastUncompressed;
     }
 
-    /**
-     * @return the bookMetaData
-     */
-    public SwordBookMetaData getBookMetaData() {
-        return bookMetaData;
-    }
-
     private static final String SUFFIX_COMP = "v";
     private static final String SUFFIX_INDEX = "s";
     private static final String SUFFIX_PART1 = "z";
@@ -227,10 +219,9 @@ public class ZVerseBackendState extends AbstractOpenFileState {
     private Testament lastTestament;
     private long lastBlockNum = -1;
     private byte[] lastUncompressed;
-    private SwordBookMetaData bookMetaData;
 
     /**
      * The log stream
      */
-    private static final Logger log = LoggerFactory.getLogger(ZVerseBackendState.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZVerseBackendState.class);
 }

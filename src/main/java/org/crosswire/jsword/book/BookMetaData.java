@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book;
@@ -54,6 +53,13 @@ public interface BookMetaData extends Comparable<BookMetaData> {
      * @return The name of this book
      */
     String getName();
+
+    /**
+     * With which Charset is this Book encoded?
+     * 
+     * @return the encoding of the Book
+     */
+    String getBookCharset();
 
     /**
      * How this Book organizes it's keys.
@@ -233,6 +239,14 @@ public interface BookMetaData extends Comparable<BookMetaData> {
     void setLocation(URI library);
 
     /**
+     * If this BookMetaData is partially loaded, reload it fully.
+     * If it is fully loaded, don't do it again.
+     * 
+     * @throws BookException when a problem is encountered loading the file
+     */
+    void reload() throws BookException;
+
+    /**
      * Get a list of all the properties available to do with this Book. The
      * returned Properties will be read-only so any attempts to alter it will
      * fail.
@@ -251,7 +265,7 @@ public interface BookMetaData extends Comparable<BookMetaData> {
     String getProperty(String key);
 
     /**
-     * Store a transient property..
+     * Store a transient property.
      * 
      * @param key
      *            the key of the property to set

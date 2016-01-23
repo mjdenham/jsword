@@ -8,17 +8,16 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.examples;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -28,6 +27,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.crosswire.jsword.book.Book;
+import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookFilter;
+import org.crosswire.jsword.book.BookFilters;
+import org.crosswire.jsword.book.BookMetaData;
+import org.crosswire.jsword.book.Books;
 import org.crosswire.jsword.passage.Key;
 import org.crosswire.jsword.passage.TreeKey;
 import org.slf4j.Logger;
@@ -39,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class GatherAllReferences {
+public final class GatherAllReferences {
     /**
      * Prevent instantiation
      */
@@ -101,30 +106,29 @@ public class GatherAllReferences {
      * Perform a test read on a single key
      */
     private static void readKey(Book book, Key key, int[] stats) {
+        String orig;
         try {
-            String orig;
-            try {
-                orig = book.getRawText(key);
-            } catch (BookException ex) {
-                log.warn("Failed to read: {}({}):{}", book.getInitials(), key.getOsisID(), ex.getMessage(), ex);
-                return;
-            }
+            orig = book.getRawText(key);
+        } catch (BookException ex) {
+            log.warn("Failed to read: {}({}):{}", book.getInitials(), key.getOsisID(), ex.getMessage(), ex);
+            return;
+        }
 
-            Matcher matcher = null;
-            if (orig.indexOf("passage=\"") != -1) {
-                matcher = thmlPassagePattern.matcher(orig);
-            } else if (orig.indexOf("osisRef=\"") != -1) {
-                matcher = osisPassagePattern.matcher(orig);
-            } else if (orig.indexOf("<RX>") != -1) {
-                matcher = gbfPassagePattern.matcher(orig);
-            }
+        Matcher matcher = null;
+        if (orig.indexOf("passage=\"") != -1) {
+            matcher = thmlPassagePattern.matcher(orig);
+        } else if (orig.indexOf("osisRef=\"") != -1) {
+            matcher = osisPassagePattern.matcher(orig);
+        } else if (orig.indexOf("<RX>") != -1) {
+            matcher = gbfPassagePattern.matcher(orig);
+        }
 
-            if (matcher != null) {
-                while (matcher.find()) {
-                    String rawRef = matcher.group(2);
-                    stats[0]++;
-                    String message = book.getInitials() + ':' + key.getOsisRef() + '/' + rawRef;
-/*
+        if (matcher != null) {
+            while (matcher.find()) {
+                String rawRef = matcher.group(2);
+                stats[0]++;
+                String message = book.getInitials() + ':' + key.getOsisRef() + '/' + rawRef;
+                /*
                     try {
                         Key ref = book.getKey(rawRef);
                         message += '/' + ref.getOsisRef();
@@ -132,14 +136,10 @@ public class GatherAllReferences {
                         message += '!' + e.getMessage();
                         stats[1]++;
                     }
- */
+                 */
 
-                    out.println(message);
-                }
+                out.println(message);
             }
-
-        } catch (Throwable ex) {
-            log.error("Unexpected error reading: {} ({})", book.getInitials(), key.getName(), ex);
         }
     }
 

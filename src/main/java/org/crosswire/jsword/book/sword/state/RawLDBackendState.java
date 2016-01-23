@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2013 - 2016
  *
  */
 package org.crosswire.jsword.book.sword.state;
@@ -30,8 +29,8 @@ import org.crosswire.common.util.IOUtil;
 import org.crosswire.common.util.Reporter;
 import org.crosswire.jsword.JSMsg;
 import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookMetaData;
 import org.crosswire.jsword.book.sword.RawLDBackend;
-import org.crosswire.jsword.book.sword.SwordBookMetaData;
 import org.crosswire.jsword.book.sword.SwordConstants;
 import org.crosswire.jsword.book.sword.SwordUtil;
 import org.slf4j.Logger;
@@ -54,8 +53,8 @@ public class RawLDBackendState extends AbstractOpenFileState  {
      * 
      * @param bookMetaData the appropriate metadata for the book
      */
-     RawLDBackendState(SwordBookMetaData bookMetaData) throws BookException {
-        this.bookMetaData = bookMetaData;
+    RawLDBackendState(BookMetaData bookMetaData) throws BookException {
+        super(bookMetaData);
         URI path = null;
         try {
             path = SwordUtil.getExpandedDataPath(bookMetaData);
@@ -97,7 +96,7 @@ public class RawLDBackendState extends AbstractOpenFileState  {
             IOUtil.close(idxRaf);
             IOUtil.close(datRaf);
 
-            log.error("failed to open files", ex);
+            LOGGER.error("failed to open files", ex);
             idxRaf = null;
             datRaf = null;
             // TRANSLATOR: Common error condition: The file could not be read.
@@ -151,10 +150,6 @@ public class RawLDBackendState extends AbstractOpenFileState  {
         this.size = size;
     }
 
-    public SwordBookMetaData getBookMetaData() {
-        return this.bookMetaData;
-    }
-
     /**
      * The number of entries in the book.
      */
@@ -179,10 +174,9 @@ public class RawLDBackendState extends AbstractOpenFileState  {
      * The data random access file
      */
     private RandomAccessFile datRaf;
-    private SwordBookMetaData bookMetaData;
 
     /**
      * The log stream
      */
-    private static final Logger log = LoggerFactory.getLogger(RawLDBackend.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RawLDBackend.class);
 }

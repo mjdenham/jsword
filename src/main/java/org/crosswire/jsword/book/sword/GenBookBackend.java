@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.sword;
@@ -26,6 +25,7 @@ import java.util.List;
 
 import org.crosswire.jsword.JSMsg;
 import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookMetaData;
 import org.crosswire.jsword.book.sword.state.GenBookBackendState;
 import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
 import org.crosswire.jsword.passage.DefaultKeyList;
@@ -168,7 +168,7 @@ public class GenBookBackend extends AbstractBackend<GenBookBackendState> {
 
     @Override
     public Key readIndex() {
-        SwordBookMetaData bmd = getBookMetaData();
+        BookMetaData bmd = getBookMetaData();
         Key reply = new DefaultKeyList(null, bmd.getName());
 
         try {

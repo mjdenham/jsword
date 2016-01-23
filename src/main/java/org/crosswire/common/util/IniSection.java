@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2015
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2015 - 2016
  */
 package org.crosswire.common.util;
 
@@ -34,10 +33,10 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A utility class for a section of an INI style configuration file.
@@ -80,7 +79,6 @@ import java.util.TreeMap;
 
  * @author DM Smith
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
- *     The copyright to this program is held by its authors.
  */
 public final class IniSection implements Iterable {
 
@@ -96,8 +94,7 @@ public final class IniSection implements Iterable {
      */
     public IniSection(String name) {
         this.name = name;
-        section = new TreeMap<String, ListSet<String>>(String.CASE_INSENSITIVE_ORDER);
-        list = new ArrayList<String>();
+        section = new HashMap<String, List<String>>();
         warnings = new StringBuilder();
     }
 
@@ -108,8 +105,7 @@ public final class IniSection implements Iterable {
      */
     public IniSection(IniSection config) {
         this.name = config.getName();
-        section = new TreeMap<String, ListSet<String>>(String.CASE_INSENSITIVE_ORDER);
-        list = new ArrayList<String>();
+        section = new HashMap<String, List<String>>();
         for (String key : config.getKeys()) {
             for (String value : config.getValues(key)) {
                 add(key, value);
@@ -121,7 +117,9 @@ public final class IniSection implements Iterable {
      */
     public void clear() {
         section.clear();
-        list.clear();
+        warnings.setLength(0);
+        warnings.trimToSize();
+        report = "";
     }
 
     /**
@@ -148,7 +146,18 @@ public final class IniSection implements Iterable {
      * @return the count
      */
     public int size() {
-        return list.size();
+        return section.size();
+    }
+
+    /**
+     * Get the number of values for a key.
+     * 
+     * @param key the key
+     * @return the number of values for a key or 0 if the key does not exist.
+     */
+    public int size(String key) {
+        Collection<String> values = section.get(key);
+        return values == null ? 0 : values.size();
     }
 
     /**
@@ -157,19 +166,19 @@ public final class IniSection implements Iterable {
      * @return {@code true} if this section is empty
      */
     public boolean isEmpty() {
-        return size() == 0;
+        return section.isEmpty();
     }
 
     public Iterator iterator() {
-        return list.iterator();
+        return section.keySet().iterator();
     }
     /**
-     * Get the unmodifiable ordered list of keys.
+     * Get the unmodifiable unordered list of keys.
      *
      * @return the set of keys
      */
-    public List<String> getKeys() {
-        return Collections.unmodifiableList(list);
+    public Collection<String> getKeys() {
+        return Collections.unmodifiableSet(section.keySet());
     }
 
     /**
@@ -246,17 +255,6 @@ public final class IniSection implements Iterable {
     }
 
     /**
-     * Get the number of values for a key.
-     * 
-     * @param key the key
-     * @return the number of values for a key or 0 if the key does not exist.
-     */
-    public int size(String key) {
-        ListSet<String> values = section.get(key);
-        return values == null ? 0 : values.size();
-    }
-
-    /**
      * Get the value for the key specified by the index.
      * 
      * @param key the key
@@ -265,7 +263,7 @@ public final class IniSection implements Iterable {
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
     public String get(String key, int index) {
-        ListSet<String> values = section.get(key);
+        List<String> values = section.get(key);
         return values == null ? null : values.get(index);
     }
 
@@ -276,12 +274,12 @@ public final class IniSection implements Iterable {
      * @return the value at the specified index or null
      */
     public String get(String key) {
-        ListSet<String> values = section.get(key);
+        List<String> values = section.get(key);
         return values == null ? null : values.get(0);
     }
 
     public String get(String key, String defaultValue) {
-        ListSet<String> values = section.get(key);
+        List<String> values = section.get(key);
         return values == null ? defaultValue : values.get(0);
     }
 
@@ -303,7 +301,6 @@ public final class IniSection implements Iterable {
         if (changed) {
             if (values.isEmpty()) {
                 section.remove(key);
-                list.remove(key);
             }
         }
 
@@ -311,11 +308,10 @@ public final class IniSection implements Iterable {
     }
 
     /**
-     * Remove the value if present.
-     * If it were the last value for the key, the key is removed.
+     * Remove the key and all its values, if present.
      * 
      * @param key the key for the section
-     * @return whether the value was present and removed
+     * @return whether the key was present and removed
      */
     public boolean remove(String key) {
         Collection<String> values = section.get(key);
@@ -323,7 +319,7 @@ public final class IniSection implements Iterable {
             return false;
         }
         section.remove(key);
-        return list.remove(key);
+        return true;
     }
 
     /**
@@ -343,11 +339,30 @@ public final class IniSection implements Iterable {
         return values.add(value);
     }
 
+    /**
+     * Load the INI from an InputStream using the given encoding.
+     *
+     * @param is the InputStream to read from
+     * @param encoding the encoding of the file
+     * @throws IOException
+     */
     public void load(InputStream is, String encoding) throws IOException {
+        load(is, encoding, null);
+    }
+
+    /**
+     * Load the INI from an InputStream using the given encoding. Filter keys as specified.
+     *
+     * @param is the InputStream to read from
+     * @param encoding the encoding of the file
+     * @param filter the filter, possibly null, for the desired keys
+     * @throws IOException
+     */
+    public void load(InputStream is, String encoding, Filter<String> filter) throws IOException {
         Reader in = null;
         try {
             in = new InputStreamReader(is, encoding);
-            load(in);
+            doLoad(in, filter);
         } finally {
             if (in != null) {
                 in.close();
@@ -364,12 +379,24 @@ public final class IniSection implements Iterable {
      * @throws IOException
      */
     public void load(File file, String encoding) throws IOException {
+        load(file, encoding, null);
+    }
+
+    /**
+     * Load the INI from a file using the given encoding. Filter keys as specified.
+     *
+     * @param file the file to load
+     * @param encoding the encoding of the file
+     * @param filter the filter, possibly null, for the desired keys
+     * @throws IOException
+     */
+    public void load(File file, String encoding, Filter<String> filter) throws IOException {
         this.configFile = file;
         this.charset = encoding;
         InputStream in = null;
         try {
             in = new FileInputStream(file);
-            load(in, encoding);
+            load(in, encoding, filter);
         } finally {
             if (in != null) {
                 in.close();
@@ -387,10 +414,23 @@ public final class IniSection implements Iterable {
      * @throws IOException
      */
     public void load(byte[] buffer, String encoding) throws IOException {
+        load(buffer, encoding, null);
+    }
+
+    /**
+     * Load the conf from a buffer. Filter keys as specified.
+     * This is used to load conf entries from the mods.d.tar.gz file.
+     *
+     * @param buffer the buffer to load
+     * @param encoding the character encoding of this INI
+     * @param filter the filter, possibly null, for the desired keys
+     * @throws IOException
+     */
+    public void load(byte[] buffer, String encoding, Filter<String> filter) throws IOException {
         InputStream in = null;
         try {
             in = new ByteArrayInputStream(buffer);
-            load(in, encoding);
+            load(in, encoding, filter);
         } finally {
             if (in != null) {
                 in.close();
@@ -453,7 +493,7 @@ public final class IniSection implements Iterable {
         writer.println();
 
         boolean first = true;
-        Iterator<String> keys = list.iterator();
+        Iterator<String> keys = section.keySet().iterator();
         while (keys.hasNext()) {
             String key = keys.next();
             Collection<String> values = section.get(key);
@@ -476,12 +516,14 @@ public final class IniSection implements Iterable {
     }
 
     /**
-     * Obtain a report of issues with this IniSection.
+     * Obtain a report of issues with this IniSection. It only reports once per load.
      * 
      * @return the report with one issue per line or an empty string if there are no issues
      */
     public String report() {
-        return warnings.toString();
+        String str = report;
+        report = "";
+        return str;
     }
 
     /**
@@ -497,16 +539,15 @@ public final class IniSection implements Iterable {
     }
 
     private Collection<String> getOrCreateValues(final String key) {
-        ListSet<String> values = section.get(key);
+        List<String> values = section.get(key);
         if (values == null) {
-            values = new ListSet<String>(String.CASE_INSENSITIVE_ORDER);
+            values = new ArrayList<String>();
             section.put(key, values);
-            list.add(key);
         }
         return values;
     }
 
-    private void load(Reader in) throws IOException {
+    private void doLoad(Reader in, Filter<String> filter) throws IOException {
         BufferedReader bin = null;
         try {
             if (in instanceof BufferedReader) {
@@ -519,10 +560,7 @@ public final class IniSection implements Iterable {
                 bin = new BufferedReader(in, MAX_BUFF_SIZE);
             }
 
-            StringBuilder buf = new StringBuilder();
             while (true) {
-                // Empty out the buffer
-                buf.setLength(0);
                 String line = advance(bin);
                 if (line == null) {
                     break;
@@ -538,14 +576,19 @@ public final class IniSection implements Iterable {
                 // Is this a key line?
                 int splitPos = getSplitPos(line);
                 if (splitPos < 0) {
-                    warnings.append("Expected to see '=' in: ").append(line).append('\n');
+                    warnings.append("Skipping: Expected to see '=' in: ").append(line).append('\n');
                     continue;
                 }
 
                 String key = line.substring(0, splitPos).trim();
                 String value = more(bin, line.substring(splitPos + 1).trim());
-                add(key, value);
+                if (filter == null || filter.test(key)) {
+                    add(key, value);
+                }
             }
+            report = warnings.toString();
+            warnings.setLength(0);
+            warnings.trimToSize();
         } finally {
             if (bin != null) {
                 bin.close();
@@ -636,11 +679,14 @@ public final class IniSection implements Iterable {
                 // and also be a key line.
                 int splitPos = getSplitPos(line);
                 if (splitPos >= 0) {
-                    warnings.append("Possible trailing continuation on previous line. Found: ").append(line).append('\n');                    
+                    warnings.append("Possible trailing continuation on previous line. Found: ").append(line).append('\n');
                 }
             }
         } while (moreCowBell && line != null);
-        return buf.toString();
+        String cowBell = buf.toString();
+        buf = null;
+        line = null;
+        return cowBell;
     }
 
     /**
@@ -675,14 +721,9 @@ public final class IniSection implements Iterable {
     private String name;
 
     /**
-     * A map of sections by section names.
+     * A map of values by key names.
      */
-    private Map<String, ListSet<String>> section;
-
-    /**
-     * Indexed list of sections maintaining insertion order.
-     */
-    private List<String> list;
+    private Map<String, List<String>> section;
 
     private File configFile;
 
@@ -690,8 +731,10 @@ public final class IniSection implements Iterable {
 
     private StringBuilder warnings;
 
+    private String report;
+
     /**
      * Buffer size is based on file size but keep it with within reasonable limits
      */
-    private static final int MAX_BUFF_SIZE = 8 * 1024;
+    private static final int MAX_BUFF_SIZE = 2 * 1024;
 }

@@ -1,9 +1,29 @@
+/**
+ * Distribution License:
+ * JSword is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License, version 2.1 or later
+ * as published by the Free Software Foundation. This program is distributed
+ * in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * The License is available on the internet at:
+ *      http://www.gnu.org/copyleft/lgpl.html
+ * or by writing to:
+ *      Free Software Foundation, Inc.
+ *      59 Temple Place - Suite 330
+ *      Boston, MA 02111-1307, USA
+ *
+ * © CrossWire Bible Society, 2005 - 2016
+ *
+ */
 package org.crosswire.jsword.book.sword;
 
 import java.io.IOException;
 import java.util.List;
 
 import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.book.BookMetaData;
 import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
 import org.crosswire.jsword.book.sword.state.OpenFileState;
 import org.crosswire.jsword.passage.Key;
@@ -21,7 +41,7 @@ public interface Backend<T extends OpenFileState> {
     /**
      * @return Returns the Sword BookMetaData.
      */
-    SwordBookMetaData getBookMetaData();
+    BookMetaData getBookMetaData();
 
     /**
      * Decipher the data in place, if it is enciphered and there is a key to

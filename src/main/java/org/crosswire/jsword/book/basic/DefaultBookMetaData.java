@@ -8,14 +8,13 @@
  * See the GNU Lesser General Public License for more details.
  *
  * The License is available on the internet at:
- *       http://www.gnu.org/copyleft/lgpl.html
+ *      http://www.gnu.org/copyleft/lgpl.html
  * or by writing to:
  *      Free Software Foundation, Inc.
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * Copyright: 2005-2013
- *     The copyright to this program is held by its authors.
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.basic;
@@ -61,6 +60,13 @@ public class DefaultBookMetaData extends AbstractBookMetaData {
     }
 
     /* (non-Javadoc)
+     * @see org.crosswire.jsword.book.BookMetaData#getBookCharset()
+     */
+    public String getBookCharset() {
+        return DEFAULT_CHARSET;
+    }
+
+    /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getPropertyKeys()
      */
     public Set<String> getPropertyKeys() {
@@ -80,7 +86,6 @@ public class DefaultBookMetaData extends AbstractBookMetaData {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setProperty(java.lang.String, java.lang.String)
      */
-    @Override
     public void setProperty(String key, String value) {
         props.put(key, value);
     }
@@ -220,7 +225,6 @@ public class DefaultBookMetaData extends AbstractBookMetaData {
         throw new UnsupportedOperationException();
     }
 
-
     private void addRow(OSISUtil.OSISFactory factory, Element table, String key, String value) {
         if (value == null) {
             return;
@@ -249,4 +253,5 @@ public class DefaultBookMetaData extends AbstractBookMetaData {
     private String name;
     private String initials;
     private Map<String, String> props;
+    private static final String DEFAULT_CHARSET = "UTF-8";
 }
